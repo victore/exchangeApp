@@ -3,9 +3,8 @@ import React, { Component } from 'react';
 class Exchange extends Component {
   constructor(props) {
     super(props);
-
     this.currencies = ["AUD", "CAD", "CHF", "INR", "USD", "EUR", "MXN", "GBP"]
-
+    this.cached = {}
     this.state = {
       base: "USD",
       other: "EUR",
@@ -52,9 +51,20 @@ class Exchange extends Component {
       return;
     }
 
+    if (this.cached[this.state.base] !== undefined && Date.now() - this.cached[this.state.base].timestamp < 1000 * 60) {
+      this.setState({
+        converted: this.cached[this.state.base].rates[this.state.other] * value
+      });
+      return;
+    }
+
     fetch(`https://api.exchangeratesapi.io/latest?base=${this.state.base}`)
       .then(response => response.json())
       .then(data => {
+        this.cached[this.state.base] = {
+          rates: data.rates,
+          timestamp: Date.now()
+        };
         this.setState({
           converted: data.rates[this.state.other] * value
         });
